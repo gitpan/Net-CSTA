@@ -1,0 +1,7 @@
+Changes
+Makefile.PL
+MANIFEST
+README
+t/Net-CSTA.t
+lib/Net/CSTA.pm
+META.yml                                 Module meta-data (added by MakeMaker)
