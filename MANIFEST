@@ -4,4 +4,5 @@ MANIFEST
 README
 t/Net-CSTA.t
 lib/Net/CSTA.pm
+lib/Net/CSTA/ASN.pm
 META.yml                                 Module meta-data (added by MakeMaker)
