@@ -25,7 +25,7 @@ our @EXPORT = qw(
 	
 );
 
-our $VERSION = '0.02';
+our $VERSION = '0.03';
 use IO::Socket::INET;
 use Net::CSTA::ASN qw(CSTAapdu);
 use Convert::ASN1 qw(:io);
@@ -50,12 +50,16 @@ sub decode {
    $this->init();
 }
 
+sub _hexenc {
+  join(":",map { sprintf("%2.2x",$_); } unpack("C*",$_[0]))
+}
+
 sub isError {
 	my $self = shift;
 	defined $self->{typeOfError};
 }
 
-sub b64 {
+sub _b64 {
 	my $x = encode_base64($_[0]);
 	
 	chomp($x);
@@ -84,7 +88,7 @@ sub _safe_copy {
 		},last SWITCH;
 		
 		do {
-			$copy = $self =~ /^[[:print:]^>^<^^=]*$/ ? $self : b64($self);
+			$copy = $self =~ /^[[:print:]^>^<^^=]*$/ ? $self : _hexenc($self);
 		},last SWITCH;
 	};
 	
@@ -128,6 +132,14 @@ sub debug
 	$_[0]->{Debug};
 }
 
+sub close 
+{
+   my $self = shift;
+   my $sock = shift || $self->{_csock};
+   shutdown($sock,2);
+   close($sock);
+}
+
 sub write_pdu {
    my $self = shift;
    my $pdu = shift;
@@ -160,11 +172,19 @@ sub read_pdu {
    
    my $n = select($rout=$rin,$wout=$win,$eout=$ein,$timeout); 
    return undef unless $n > 0;
-   
-   # We assume the server sends the entire message promptly
-   my $nread = $sock->sysread($buf,2);
-   my $len = unpack "n",$buf;
-   $sock->sysread($buf,$len);
+ 
+   eval { 
+      local $SIG{ALRM} = sub { die "alarm\n" };
+      alarm ($timeout || 30);
+      my $nread = $sock->sysread($buf,2);
+      my $len = unpack "n",$buf;
+      $sock->sysread($buf,$len);
+      alarm 0;
+   }; if ($@) {
+      die unless $@ eq "alarm\n";
+      warn "Caught timeout\n";
+      return undef;
+   }
 
    if ($self->debug > 1)
    {
@@ -199,7 +219,8 @@ sub send {
 
 sub receive {
    my $self = shift;
-   my $pdu = $self->read_pdu();
+   my $pdu = $self->read_pdu(@_);
+   return undef unless $pdu;
 
    Net::CSTA::PDU->decode($pdu);
 }
