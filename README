@@ -25,6 +25,9 @@ This module requires these other modules and libraries:
   Convert::ASN1
   MIME::Base64
   XML::Simple
+
+  and a patched version of Convert::ASN1 available at
+  http://devel.it.su.se/pub/jsp/polopoly.jsp?d=1026&a=6589 
   
 COPYRIGHT AND LICENCE
 

@@ -25,7 +25,7 @@ our @EXPORT = qw(
 	
 );
 
-our $VERSION = '0.03';
+our $VERSION = '0.04';
 use IO::Socket::INET;
 use Net::CSTA::ASN qw(CSTAapdu);
 use Convert::ASN1 qw(:io);
